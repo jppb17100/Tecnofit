@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\MovementRankingResource;
 use App\Models\Movement;
+use App\Models\PersonalRecord;
 use App\Services\RankingService;
 
 class RankingController extends Controller
@@ -17,9 +17,21 @@ class RankingController extends Controller
 
     public function index($movementId)
     {
-        $movement = Movement::findOrFail($movementId);
-        $rankings = $this->rankingService->getMovementRanking($movement);
+        try {
+            $movement = Movement::findOrFail($movementId);
+            $records = PersonalRecord::getRankingByMovement($movementId)->get();
+            $ranking = $this->rankingService->calculateRanking($records);
 
-        return response()->json($rankings);
+            return response()->json([
+                'movement' => $movement->name,
+                'ranking'  => $ranking
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'   => 'Erro ao buscar ranking',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
