@@ -2,69 +2,33 @@
 
 namespace App\Services;
 
-use App\Models\Movement;
-use App\Models\PersonalRecord;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
-
 class RankingService
 {
-    public function getMovementRanking(Movement $movement): array
+    public function calculateRanking($records)
     {
-        // Log para debug
-        Log::info('Movement ID recebido:', ['id' => $movement->id]);
-
-        $records = PersonalRecord::select([
-            'movements.name as movement_name',
-            'users.name as user_name',
-            'personal_records.value',
-            'personal_records.date'
-        ])
-            ->join('movements', 'movements.id', '=', 'personal_records.movement_id')
-            ->join('users', 'users.id', '=', 'personal_records.user_id')
-            ->where('movements.id', $movement->id) // Alterado para usar movements.id
-            ->whereIn('personal_records.id', function($query) use ($movement) {
-                $query->select(\DB::raw('MAX(id)'))
-                    ->from('personal_records')
-                    ->where('movement_id', $movement->id)
-                    ->groupBy('user_id')
-                    ->havingRaw('value = MAX(value)');
-            })
-            ->get();
-
-        // Log para debug
-        Log::info('Registros encontrados:', ['count' => $records->count()]);
-        Log::info('SQL executado:', ['sql' => \DB::getQueryLog()]);
-
-        $rankings = [];
-        $position = 1;
+        $ranking = [];
         $lastValue = null;
-        $lastPosition = 1;
+        $currentPosition = 0;
+        $sameValueCount = 0;
 
-        foreach ($records->sortByDesc('value') as $record) {
-            if ($lastValue === $record->value) {
-                $currentPosition = $lastPosition;
+        foreach ($records as $index => $record) {
+            if ($lastValue !== $record->best_value) {
+                $currentPosition = $index + 1 - $sameValueCount;
+                $sameValueCount = 0;
             } else {
-                $currentPosition = $position;
-                $lastPosition = $position;
+                $sameValueCount++;
             }
 
-            $rankings[] = [
+            $ranking[] = [
+                'position'  => $currentPosition,
                 'user_name' => $record->user_name,
-                'value' => (float)$record->value,
-                'position' => $currentPosition,
-                'date' => $record->date
+                'value'     => (float)$record->best_value,
+                'date'      => $record->record_date
             ];
 
-            $lastValue = $record->value;
-            $position++;
+            $lastValue = $record->best_value;
         }
 
-        var_dump($records);
-        die;
-        return [
-            'movement_name' => $records->first()?->movement_name ?? '',
-            'rankings' => $rankings
-        ];
+        return $ranking;
     }
 }
