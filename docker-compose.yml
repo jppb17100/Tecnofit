@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: lumen_php
+    volumes:
+      - ./src:/var/www
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+    networks:
+      - lumen_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: lumen_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: mysecret  # Senha do usuário root
+      MYSQL_DATABASE: tecnofit       # Nome do banco de dados
+      MYSQL_USER: admin              # Usuário regular
+      MYSQL_PASSWORD: mysecret       # Senha do usuário regular
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - lumen_network
+
+volumes:
+  mysql_data:
+
+networks:
+  lumen_network:
