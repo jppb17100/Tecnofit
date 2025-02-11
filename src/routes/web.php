@@ -13,11 +13,6 @@
 |
 */
 
-$router->get('/', function () use ($router) {
-    return "jao predo";
-    return $router->app->version();
-});
-
 $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('ranking/{movementId}', 'RankingController@index');
 });
