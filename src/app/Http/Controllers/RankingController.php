@@ -8,6 +8,7 @@ use App\Services\RankingService;
 
 class RankingController extends Controller
 {
+
     private $rankingService;
 
     public function __construct(RankingService $rankingService)
