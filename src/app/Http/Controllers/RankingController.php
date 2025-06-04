@@ -17,6 +17,8 @@ class RankingController extends Controller
 
     public function index($movementId)
     {
+
+        //teste
         try {
             $movement = Movement::findOrFail($movementId);
             $records = PersonalRecord::getRankingByMovement($movementId)->get();
